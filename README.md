@@ -1,6 +1,7 @@
 # YouTube Playlist Length Calculator
 
 A YouTube Playlist Length Calculator made with Node.js/Express.js that calculates the total length of videos in a YouTube playlist.
+![image](https://github.com/yllberisha/Youtube_Playlist_Length_Calcualtor/assets/102769384/92ef2935-238d-49ac-931e-81cdb56e7550)
 
 ## Prerequisites
 
