@@ -5,7 +5,8 @@
     "ejs": "^3.1.8",
     "express": "^4.18.2",
     "googleapis": "^108.0.1",
-    "moment": "^2.29.4"
+    "moment": "^2.29.4",
+    "youtube-duration-format": "^0.2.0"
   },
   "name": "yt-playlist-length-calculator",
   "description": "",

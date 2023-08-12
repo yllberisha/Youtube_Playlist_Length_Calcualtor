@@ -1,77 +1,72 @@
-const express = require('express');
-require('dotenv').config();
+const express = require("express");
+require("dotenv").config();
 const app = express();
-const bodyParser = require('body-parser');
-const { getTime } = require('./src/getTime')
-const { getData } = require('./src/getData')
+const bodyParser = require("body-parser");
+const { getTime } = require("./src/getTime");
+const { getData } = require("./src/getData");
 
-app.use(express.static('public'));
+app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 
-var error = "";
-app.get('/', (req, res) => {
-    res.render('index', { error: error, totalVideos: "", videoLen: "" });
-})
+app.get("/", (req, res) => {
+  res.render("index", { error: "", totalVideos: "", videoLen: "" });
+});
 
-app.post('/', (req, res) => {
-    var url = req.body.url;
-    if (url.length < 38 && url.slice(0, 38) != "https://www.youtube.com/playlist?list=") {
-        error = "Enter correct URL";
-        res.render('index', { error: error, totalVideos: "", videoLen: "" });
+app.post("/", async (req, res) => {
+  var url = req.body.url;
+  if (
+    url.length < 38 ||
+    url.slice(0, 38) !== "https://www.youtube.com/playlist?list="
+  ) {
+    res.render("index", {
+      error: "Enter correct URL",
+      totalVideos: "",
+      videoLen: "",
+    });
+    return;
+  }
 
-    }
-    else {
+  const ID = url.slice(38, url.length);
 
-        const ID = url.slice(38, url.length);
-        // console.log(url);
+  try {
+    let [totalV, Videos] = await getData(ID);
 
-        var start, end;
-        if (req.body.start && req.body.end) {
-            if (req.body.start) {
-                start = req.body.start;
-            }
-            if (req.body.end) {
-                end = req.body.end;
-            }
-        }
-        else if (req.body.start) {
-            error = "Please enter 'To' Field";
-            res.render('index', { error: error, totalVideos: "", videoLen: "" });
-        }
-        else if (req.body.end) {
-            error = "Please enter 'From' Field";
-            res.render('index', { error: error, totalVideos: "", videoLen: "" });
-        }
+    // Extract start and end parameters from the request body
+    let start = parseInt(req.body.start);
+    let end = parseInt(req.body.end);
 
-        (async () => {
-            let [totalV, Videos] = await getData(ID);
-            if (!(start || end)) {
-                start = 0;
-                end = Videos.length - 1;
-            }
-            else {
-                start = start - 1;
-                if (end == totalV) {
-                    end = end - 1;
-                }
-            }
-            if(start<=end){
-                let Time = await getTime(Videos, start, end);
-                if (!Time) {
-                    res.render('index', { error: "Something went Wrong!!!", totalVideos: "", videoLen: "" });
-                }
-                res.render('index', { error: error, totalVideos: totalV, videoLen: Time });
-            }
-            else{
-                res.render('index', { error: "Incorrect Input for Range", totalVideos:"", videoLen: "" });
-            }
-        })();
+    if (isNaN(start) || isNaN(end) || start < 1 || end > totalV) {
+      start = 1;
+      end = totalV;
     }
 
-})
+    // Calculate Time and render the template
+    let Time = await getTime(Videos, start - 1, end - 1);
+    if (!Time) {
+      res.render("index", {
+        error: "Something went wrong!!!",
+        totalVideos: "",
+        videoLen: "",
+      });
+      return;
+    }
 
+    res.render("index", {
+      error: "",
+      totalVideos: totalV,
+      videoLen: Time,
+    });
+  } catch (error) {
+    console.error("Error fetching playlist data:", error);
+    res.render("index", {
+      error: "Error fetching playlist data. Please try again later.",
+      totalVideos: "",
+      videoLen: "",
+    });
+  }
+});
 
-app.listen(process.env.PORT, (req, res) => {
-    console.log("listening on port " + process.env.PORT);
-})
+app.listen(process.env.PORT, () => {
+  console.log("Listening on port " + process.env.PORT);
+});
